@@ -12,6 +12,7 @@ import java.util.concurrent.Callable;
 
 // CraftBukkit start
 import org.bukkit.Bukkit;
+import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.util.CraftMagicNumbers;
 import org.bukkit.craftbukkit.util.LongHashSet;
 import org.bukkit.craftbukkit.util.UnsafeList;
@@ -1398,6 +1399,14 @@ public abstract class World implements IBlockAccess {
 
         for (int i = 0; i < list.size(); ++i) {
             Entity entity1 = (Entity) list.get(i);
+            if(entity != null && entity instanceof EntityPlayer
+                    && entity1 != null && entity1 instanceof EntityPlayer) {
+                CraftPlayer placer = ((EntityPlayer)entity).getBukkitEntity();
+                CraftPlayer blocking = ((EntityPlayer)entity1).getBukkitEntity();
+                if(!placer.canSee(blocking)) {
+                    continue;
+                }
+            }
 
             if (!entity1.dead && entity1.l && entity1 != entity) {
                 return false;
