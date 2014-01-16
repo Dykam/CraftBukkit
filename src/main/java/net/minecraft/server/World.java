@@ -1400,11 +1400,10 @@ public abstract class World implements IBlockAccess {
         for (int i = 0; i < list.size(); ++i) {
             Entity entity1 = (Entity) list.get(i);
             // CraftBukkit start
-            if(entity != null && entity instanceof EntityPlayer
-                    && entity1 != null && entity1 instanceof EntityPlayer) {
+            if (entity instanceof EntityPlayer && entity1 instanceof EntityPlayer) {
                 CraftPlayer placer = ((EntityPlayer)entity).getBukkitEntity();
                 CraftPlayer blocking = ((EntityPlayer)entity1).getBukkitEntity();
-                if(!placer.canSee(blocking)) {
+                if (!placer.canSee(blocking)) {
                     continue;
                 }
             }
