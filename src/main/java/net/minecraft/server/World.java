@@ -1399,6 +1399,7 @@ public abstract class World implements IBlockAccess {
 
         for (int i = 0; i < list.size(); ++i) {
             Entity entity1 = (Entity) list.get(i);
+            // CraftBukkit start
             if(entity != null && entity instanceof EntityPlayer
                     && entity1 != null && entity1 instanceof EntityPlayer) {
                 CraftPlayer placer = ((EntityPlayer)entity).getBukkitEntity();
@@ -1407,6 +1408,7 @@ public abstract class World implements IBlockAccess {
                     continue;
                 }
             }
+            // CraftBukkit end
 
             if (!entity1.dead && entity1.l && entity1 != entity) {
                 return false;
