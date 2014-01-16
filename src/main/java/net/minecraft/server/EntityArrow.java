@@ -3,6 +3,7 @@ package net.minecraft.server;
 import java.util.List;
 
 // CraftBukkit start
+import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.event.entity.EntityCombustByEntityEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 // CraftBukkit end
@@ -205,7 +206,19 @@ public class EntityArrow extends Entity implements IProjectile {
             float f2;
             float f3;
 
+            // CraftBukkit start
+            if(movingobjectposition != null && movingobjectposition.entity instanceof EntityPlayer
+                    && shooter != null && shooter instanceof EntityPlayer) {
+                CraftPlayer craftHit = ((EntityPlayer) movingobjectposition.entity).getBukkitEntity();
+                CraftPlayer craftShooter = ((EntityPlayer)shooter).getBukkitEntity();
+                if(!craftShooter.canSee(craftHit)) {
+                    movingobjectposition = null;
+                }
+            }
+            //CraftBukkit end
+
             if (movingobjectposition != null) {
+
                 org.bukkit.craftbukkit.event.CraftEventFactory.callProjectileHitEvent(this); // CraftBukkit - Call event
 
                 if (movingobjectposition.entity != null) {

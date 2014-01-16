@@ -147,6 +147,17 @@ public abstract class EntityProjectile extends Entity implements IProjectile {
             }
         }
 
+        // CraftBukkit start
+        if(movingobjectposition != null && movingobjectposition.entity instanceof EntityPlayer
+                && shooter != null && shooter instanceof EntityPlayer) {
+            org.bukkit.craftbukkit.entity.CraftPlayer craftHit = ((EntityPlayer) movingobjectposition.entity).getBukkitEntity();
+            org.bukkit.craftbukkit.entity.CraftPlayer craftShooter = ((EntityPlayer)shooter).getBukkitEntity();
+            if(!craftShooter.canSee(craftHit)) {
+                movingobjectposition = null;
+            }
+        }
+        //CraftBukkit end
+
         if (movingobjectposition != null) {
             if (movingobjectposition.type == EnumMovingObjectType.BLOCK && this.world.getType(movingobjectposition.b, movingobjectposition.c, movingobjectposition.d) == Blocks.PORTAL) {
                 this.ah();
