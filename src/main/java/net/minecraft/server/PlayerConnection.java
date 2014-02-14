@@ -179,6 +179,13 @@ public class PlayerConnection implements PacketPlayInListener {
     }
 
     public void a(PacketPlayInFlying packetplayinflying) {
+        // CraftBukkit start - Check for NaN
+        if (Double.isNaN(packetplayinflying.x) || Double.isNaN(packetplayinflying.y) || Double.isNaN(packetplayinflying.z) || Double.isNaN(packetplayinflying.stance)) {
+            c.warn(player.getName() + " was caught trying to crash the server with an invalid position.");
+            getPlayer().kickPlayer("Nope!");
+            return;
+        }
+        // CraftBukkit end
         WorldServer worldserver = this.minecraftServer.getWorldServer(this.player.dimension);
 
         this.g = true;
@@ -247,13 +254,6 @@ public class PlayerConnection implements PacketPlayInListener {
                         return;
                     }
                 }
-            }
-
-            if (Double.isNaN(packetplayinflying.x) || Double.isNaN(packetplayinflying.y) || Double.isNaN(packetplayinflying.z) || Double.isNaN(packetplayinflying.stance)) {
-                player.teleport(player.getWorld().getSpawnLocation(), PlayerTeleportEvent.TeleportCause.UNKNOWN);
-                System.err.println(player.getName() + " was caught trying to crash the server with an invalid position.");
-                player.kickPlayer("Nope!");
-                return;
             }
 
             if (this.checkMovement && !this.player.dead) {
@@ -836,8 +836,28 @@ public class PlayerConnection implements PacketPlayInListener {
             // CraftBukkit start - replaced with thread safe throttle
             // this.chatThrottle += 20;
             if (chatSpamField.addAndGet(this, 20) > 200 && !this.minecraftServer.getPlayerList().isOp(this.player.getName())) {
+                if (packetplayinchat.a()) {
+                    Waitable waitable = new Waitable() {
+                        @Override
+                        protected Object evaluate() {
+                            PlayerConnection.this.disconnect("disconnect.spam");
+                            return null;
+                        }
+                    };
+
+                    this.minecraftServer.processQueue.add(waitable);
+
+                    try {
+                        waitable.get();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } catch (ExecutionException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    this.disconnect("disconnect.spam");
+                }
                 // CraftBukkit end
-                this.disconnect("disconnect.spam");
             }
         }
     }
@@ -962,19 +982,9 @@ public class PlayerConnection implements PacketPlayInListener {
             float f8 = f3 * f5;
             double d3 = 5.0D;
             Vec3D vec3d1 = vec3d.add((double) f7 * d3, (double) f6 * d3, (double) f8 * d3);
-            MovingObjectPosition movingobjectposition = this.player.world.rayTrace(vec3d, vec3d1, true);
+            MovingObjectPosition movingobjectposition = this.player.world.rayTrace(vec3d, vec3d1, false);
 
-            boolean valid = false;
             if (movingobjectposition == null || movingobjectposition.type != EnumMovingObjectType.BLOCK) {
-                valid = true;
-            } else {
-                Block block = this.player.world.getType(movingobjectposition.b, movingobjectposition.c, movingobjectposition.d);
-                if (!block.c()) { // Should be isBreakable?
-                    valid = true;
-                }
-            }
-
-            if (valid) {
                 CraftEventFactory.callPlayerInteractEvent(this.player, Action.LEFT_CLICK_AIR, this.player.inventory.getItemInHand());
             }
 
@@ -1655,7 +1665,7 @@ public class PlayerConnection implements PacketPlayInListener {
                     CraftEventFactory.handleEditBookEvent(player, itemstack); // CraftBukkit
                 }
                 // CraftBukkit start
-            } catch (Exception exception) {
+            } catch (Throwable exception) {
                 c.error("Couldn\'t handle book info", exception);
                 this.disconnect("Invalid book data!");
                 // CraftBukkit end
@@ -1672,7 +1682,7 @@ public class PlayerConnection implements PacketPlayInListener {
                     CraftEventFactory.handleEditBookEvent(player, itemstack); // CraftBukkit
                 }
                 // CraftBukkit start
-            } catch (Exception exception1) {
+            } catch (Throwable exception1) {
                 c.error("Couldn\'t sign book", exception1);
                 this.disconnect("Invalid book data!");
                 // CraftBukkit end
@@ -1690,8 +1700,8 @@ public class PlayerConnection implements PacketPlayInListener {
                     if (container instanceof ContainerMerchant) {
                         ((ContainerMerchant) container).e(i);
                     }
-                } catch (Exception exception2) {
                     // CraftBukkit start
+                } catch (Throwable exception2) {
                     c.error("Couldn\'t select trade", exception2);
                     this.disconnect("Invalid trade data!");
                     // CraftBukkit end
@@ -1726,8 +1736,8 @@ public class PlayerConnection implements PacketPlayInListener {
                             commandblocklistenerabstract.e();
                             this.player.sendMessage(new ChatMessage("advMode.setCommand.success", new Object[] { s}));
                         }
-                    } catch (Exception exception3) {
                         // CraftBukkit start
+                    } catch (Throwable exception3) {
                         c.error("Couldn\'t set command block", exception3);
                         this.disconnect("Invalid CommandBlock data!");
                         // CraftBukkit end
@@ -1752,8 +1762,8 @@ public class PlayerConnection implements PacketPlayInListener {
                             tileentitybeacon.e(j);
                             tileentitybeacon.update();
                         }
-                    } catch (Exception exception4) {
                         // CraftBukkit start
+                    } catch (Throwable exception4) {
                         c.error("Couldn\'t set beacon", exception4);
                         this.disconnect("Invalid beacon data!");
                         // CraftBukkit end
